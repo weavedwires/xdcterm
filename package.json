@@ -10,8 +10,8 @@
   "type": "module",
   "author": "",
   "dependencies": {
-    "@deltachat/jsonrpc-client": "^1.149.0",
-    "@deltachat/stdio-rpc-server": "^1.149.0",
+    "@deltachat/jsonrpc-client": "latest",
+    "@deltachat/stdio-rpc-server": "latest",
     "node-pty": "^1.0.0"
   },
   "devDependencies": {
