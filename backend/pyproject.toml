@@ -2,5 +2,5 @@
 name = "xdcterm-bot"
 version = "0.1.0"
 description = "Terminal emulator WebXDC bot"
-requires-python = ">=3.13"
+requires-python = ">=3.14"
 dependencies = ["deltabot-cli>=0.10.0"]

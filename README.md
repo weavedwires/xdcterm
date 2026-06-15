@@ -45,9 +45,29 @@ uv run bot.py serve
 
 ### Деплой (systemd user service)
 
+Содержимое `xdcterm.service`:
+
+```ini
+[Unit]
+Description=xdcterm Delta Chat bot
+After=network-online.target
+
+[Service]
+Type=simple
+Environment=PATH=/home/user/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=TERM=xterm-256color
+WorkingDirectory=/home/user/python/xdcterm
+ExecStart=uv run --directory backend bot.py
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=default.target
+```
+
 ```bash
 # скопировать сервис
-cp backend/xdcterm.service ~/.config/systemd/user/
+cp xdcterm.service ~/.config/systemd/user/
 
 # перечитать юниты
 systemctl --user daemon-reload
