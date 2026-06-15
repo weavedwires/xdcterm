@@ -7,12 +7,15 @@ const INPUT = 0x49;
 const OUTPUT = 0x4f;
 const EXIT = 0x45;
 const RESIZE = 0x52;
+const LIFECYCLE = 0x43;
+const LIFECYCLE_OPEN = 0x01;
+const LIFECYCLE_CLOSE = 0x00;
 
 document.body.style.cssText =
   "margin:0;padding:0;background:#000;height:100vh;overflow:hidden";
 document.getElementById("terminal").style.cssText = "height:100vh";
 
-const term = new Terminal({ cursorBlink: true, fontSize: 14, fontFamily: '"JB", monospace' });
+const term = new Terminal({ cursorBlink: true, fontSize: 12, fontFamily: '"JB", monospace' });
 const fitAddon = new FitAddon();
 term.loadAddon(fitAddon);
 term.loadAddon(new ImageAddon({ sixelSupport: true }));
@@ -32,6 +35,37 @@ function sendResize() {
   realtime.send(buf);
 }
 
+function sendLifecycle(state) {
+  realtime.send(new Uint8Array([LIFECYCLE, state]));
+}
+
+let hbTimer;
+
+function startHeartbeat() {
+  if (hbTimer) return;
+  sendLifecycle(LIFECYCLE_OPEN);
+  hbTimer = setInterval(() => sendLifecycle(LIFECYCLE_OPEN), 1000);
+}
+
+function stopHeartbeat() {
+  clearInterval(hbTimer);
+  hbTimer = null;
+  try { sendLifecycle(LIFECYCLE_CLOSE); } catch (_) {}
+}
+
+function receiveUpdate(msg) {
+  if (msg[0] === OUTPUT) {
+    term.write(msg.slice(1));
+  } else if (msg[0] === EXIT) {
+    term.dispose();
+  }
+}
+
+const realtime = window.webxdc.joinRealtimeChannel();
+realtime.setListener(receiveUpdate);
+startHeartbeat();
+sendResize();
+
 window.addEventListener("resize", () => {
   fitAddon.fit();
   sendResize();
@@ -47,14 +81,9 @@ term.onData((data) => {
   realtime.send(buf);
 });
 
-function receiveUpdate(msg) {
-  if (msg[0] === OUTPUT) {
-    term.write(msg.slice(1));
-  } else if (msg[0] === EXIT) {
-    term.dispose();
-  }
-}
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) stopHeartbeat(); else startHeartbeat();
+});
 
-const realtime = window.webxdc.joinRealtimeChannel();
-realtime.setListener(receiveUpdate);
-sendResize();
+window.addEventListener("pagehide", stopHeartbeat);
+window.addEventListener("pageshow", startHeartbeat);
