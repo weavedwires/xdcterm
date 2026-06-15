@@ -14,8 +14,6 @@ XDCterm — это терминальный эмулятор, работающи
 
 ## Установка
 
-Build order — сначала frontend, потом backend.
-
 ### Frontend
 
 ```bash
@@ -47,7 +45,7 @@ systemctl --user enable --now xdcterm
 sudo loginctl enable-linger user
 ```
 
-### Логи
+### Ссылки и логи использования терминала
 
 ```bash
 journalctl --user -u xdcterm -f
