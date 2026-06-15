@@ -3,4 +3,4 @@ dist
 dist-release
 __pycache__
 backend/.venv
-data
+backend/data

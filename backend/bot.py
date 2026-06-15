@@ -10,7 +10,8 @@ from pathlib import Path
 from deltachat2 import EventType, MsgData, events
 from deltabot_cli import BotCli
 
-import db
+from db import db
+from models import AccountContext, User
 
 INPUT = 0x49
 OUTPUT = 0x4f
@@ -21,18 +22,15 @@ LIFECYCLE_OPEN = 0x01
 LIFECYCLE_CLOSE = 0x00
 WEBXDC_FILE = str(Path(__file__).resolve().parents[1] / "frontend/dist-release/xdcterm.xdc")
 
-db.init()
-
 cli = BotCli("xdcterm")
-ptys: dict[int, "PTYProcess"] = {}
-_timers: dict[int, threading.Timer] = {}
+
+db.init()
 
 
 class PTYProcess:
-    def __init__(self, bot, accid: int, msgid: int) -> None:
-        self.bot = bot
-        self.accid = accid
-        self.msgid = msgid
+    def __init__(self, ctx: AccountContext, msg_id: int) -> None:
+        self.ctx = ctx
+        self.msg_id = msg_id
         pid, self.fd = pty.fork()
         if pid == 0:
             shell = os.environ.get("SHELL", "bash")
@@ -46,13 +44,11 @@ class PTYProcess:
                 data = os.read(self.fd, 4096)
                 if not data:
                     break
-                self.bot.rpc.send_webxdc_realtime_data(
-                    self.accid, self.msgid, [OUTPUT] + list(data)
-                )
+                self.ctx.send_realtime(self.msg_id, [OUTPUT] + list(data))
         except OSError:
             pass
         finally:
-            self.bot.rpc.send_webxdc_realtime_data(self.accid, self.msgid, [EXIT])
+            self.ctx.send_realtime(self.msg_id, [EXIT])
 
     def write(self, data: bytes) -> None:
         os.write(self.fd, data)
@@ -68,72 +64,105 @@ class PTYProcess:
             pass
 
 
-def spawn_pty(bot, accid: int, msgid: int) -> None:
-    bot.logger.info("Spawning PTY for msg %d", msgid)
-    ptys[msgid] = PTYProcess(bot, accid, msgid)
+class PTYManager:
+    def __init__(self):
+        self._ptys: dict[int, PTYProcess] = {}
+        self._timers: dict[int, threading.Timer] = {}
+
+    def spawn(self, ctx: AccountContext, msg_id: int) -> None:
+        ctx.log("Spawning PTY for msg %d", msg_id)
+        self._ptys[msg_id] = PTYProcess(ctx, msg_id)
+
+    def get(self, msg_id: int) -> PTYProcess | None:
+        return self._ptys.get(msg_id)
+
+    def handle_open(self, ctx: AccountContext, msg_id: int) -> None:
+        if msg_id in self._ptys:
+            self._reset_timer(ctx, msg_id)
+            return
+        user = db.get_user_by_msg(msg_id)
+        if not user:
+            try:
+                msg = ctx.get_message(msg_id)
+                c = ctx.get_contact(msg.from_id)
+                user = User(c.id, c.display_name, c.address)
+                db.upsert_user(user.user_id, user.display_name, user.addr)
+                db.add_message(msg_id, user.user_id)
+            except Exception:
+                user = User(0, "?", "?")
+        self.spawn(ctx, msg_id)
+        db.open_session(msg_id, user.user_id)
+        ctx.log("PTY %d opened by %s with %s", msg_id, user.display_name, user.addr)
+        _notify_admin(ctx, f"PTY {msg_id} opened by {user.display_name} with {user.addr}")
+        self._reset_timer(ctx, msg_id)
+
+    def kill(self, ctx: AccountContext, msg_id: int, reason: str = "exited") -> None:
+        self._cancel_timer(msg_id)
+        pty = self._ptys.pop(msg_id, None)
+        if not pty:
+            return
+        pty.close()
+        db.close_session(msg_id)
+        user = db.get_user_by_msg(msg_id)
+        if user:
+            text = f"PTY {msg_id} closed by {user.display_name} with {user.addr} because {reason}"
+        else:
+            text = f"PTY {msg_id} closed because {reason}"
+        ctx.log(text)
+        _notify_admin(ctx, text)
+
+    def _reset_timer(self, ctx: AccountContext, msg_id: int) -> None:
+        self._cancel_timer(msg_id)
+        t = threading.Timer(60.0, self.kill, args=[ctx, msg_id, "timeout"])
+        t.daemon = True
+        t.start()
+        self._timers[msg_id] = t
+
+    def _cancel_timer(self, msg_id: int) -> None:
+        t = self._timers.pop(msg_id, None)
+        if t:
+            t.cancel()
 
 
-def send_webxdc(bot, accid: int, chatid: int, contact_id: int) -> int:
-    c = bot.rpc.get_contact(accid, contact_id)
-    db.upsert_user(contact_id, c.display_name, c.address)
-    msgid = bot.rpc.send_msg(accid, chatid, MsgData(file=WEBXDC_FILE))
-    bot.rpc.send_webxdc_realtime_advertisement(accid, msgid)
-    db.add_message(msgid, contact_id)
+ptys = PTYManager()
+
+
+def _send_webxdc(ctx: AccountContext, chatid: int, contact_id: int) -> int:
+    c = ctx.get_contact(contact_id)
+    user = User(c.id, c.display_name, c.address)
+    db.upsert_user(user.user_id, user.display_name, user.addr)
+    msgid = ctx.send_msg(chatid, MsgData(file=WEBXDC_FILE))
+    ctx.send_advertisement(msgid)
+    db.add_message(msgid, user.user_id)
     return msgid
 
 
-def notify_admin(bot, accid, text):
+def _notify_admin(ctx: AccountContext, text: str) -> None:
+    msg_id = db.get_admin_message_id()
+    if not msg_id:
+        return
     try:
-        msg_id = db.get_admin_message_id()
-        if msg_id:
-            msg = bot.rpc.get_message(accid, msg_id)
-            bot.rpc.send_msg(accid, msg.chat_id, MsgData(text=text))
+        msg = ctx.get_message(msg_id)
+        ctx.send_msg(msg.chat_id, MsgData(text=text))
     except Exception:
         pass
 
 
-def _kill_pty(msgid, bot, accid, reason="exited"):
-    _cancel_timer(msgid)
-    p = ptys.pop(msgid, None)
-    if p:
-        p.close()
-        db.close_session(msgid)
-        user = db.get_user_by_msg(msgid)
-        if user:
-            text = f"PTY {msgid} closed by {user['display_name']} with {user['addr']} because {reason}"
-            bot.logger.info(text)
-            notify_admin(bot, accid, text)
-        else:
-            text = f"PTY {msgid} closed because {reason}"
-            bot.logger.info(text)
-            notify_admin(bot, accid, text)
-
-
-def _cancel_timer(msgid):
-    t = _timers.pop(msgid, None)
-    if t:
-        t.cancel()
-
-
-def _reset_timer(msgid, bot, accid):
-    _cancel_timer(msgid)
-    t = threading.Timer(60.0, _kill_pty, args=[msgid, bot, accid, "timeout"])
-    t.daemon = True
-    t.start()
-    _timers[msgid] = t
-
-
 @cli.on(events.RawEvent(types=[EventType.SECUREJOIN_INVITER_PROGRESS]))
 def on_securejoin(bot, accid, event) -> None:
-    if event.progress == 1000 and not bot.rpc.get_contact(accid, event.contact_id).is_bot:
-        contact_id = event.contact_id
-        chatid = bot.rpc.create_chat_by_contact_id(accid, contact_id)
-        send_webxdc(bot, accid, chatid, contact_id)
+    if event.progress != 1000:
+        return
+    if bot.rpc.get_contact(accid, event.contact_id).is_bot:
+        return
+    ctx = AccountContext(bot, accid)
+    chatid = bot.rpc.create_chat_by_contact_id(accid, event.contact_id)
+    _send_webxdc(ctx, chatid, event.contact_id)
 
 
 @cli.on(events.NewMessage(command="/start"))
 def on_start_cmd(bot, accid, event) -> None:
-    send_webxdc(bot, accid, event.msg.chat_id, event.msg.from_id)
+    ctx = AccountContext(bot, accid)
+    _send_webxdc(ctx, event.msg.chat_id, event.msg.from_id)
 
 
 @cli.on(events.NewMessage(command="/list"))
@@ -148,55 +177,60 @@ def on_list(bot, accid, event) -> None:
         bot.rpc.send_msg(accid, event.msg.chat_id, MsgData(text="\n".join(lines)))
 
 
+def _handle_input(ctx: AccountContext, msg_id: int, raw: bytes) -> None:
+    p = ptys.get(msg_id)
+    if p:
+        p.write(raw[1:])
+
+
+def _handle_resize(ctx: AccountContext, msg_id: int, raw: bytes) -> None:
+    if len(raw) < 5:
+        return
+    p = ptys.get(msg_id)
+    if p:
+        cols = (raw[1] << 8) | raw[2]
+        rows = (raw[3] << 8) | raw[4]
+        p.resize(cols, rows)
+
+
+def _handle_lifecycle(ctx: AccountContext, msg_id: int, raw: bytes) -> None:
+    if len(raw) < 2:
+        return
+    state = raw[1]
+    if state == LIFECYCLE_CLOSE:
+        ptys.kill(ctx, msg_id, "exited")
+    elif state == LIFECYCLE_OPEN:
+        ptys.handle_open(ctx, msg_id)
+
+
+CMD_HANDLERS = {
+    INPUT: _handle_input,
+    RESIZE: _handle_resize,
+    LIFECYCLE: _handle_lifecycle,
+}
+
+
 @cli.on(events.RawEvent(func=lambda e: e.kind == "WebxdcRealtimeData"))
 def on_webxdc_data(bot, accid, event) -> None:
-    data = bytes(event.data)
-    if not data:
+    raw = bytes(event.data)
+    if not raw:
         return
-    msg_id = event.msg_id
-    cmd = data[0]
-    if cmd == INPUT:
-        p = ptys.get(msg_id)
-        if p:
-            p.write(data[1:])
-    elif cmd == RESIZE and len(data) >= 5:
-        p = ptys.get(msg_id)
-        if p:
-            cols = (data[1] << 8) | data[2]
-            rows = (data[3] << 8) | data[4]
-            p.resize(cols, rows)
-    elif cmd == LIFECYCLE and len(data) >= 2:
-        state = data[1]
-        if state == LIFECYCLE_CLOSE:
-            _kill_pty(msg_id, bot, accid, "exited")
-        elif state == LIFECYCLE_OPEN:
-            if msg_id not in ptys:
-                user = db.get_user_by_msg(msg_id)
-                if not user:
-                    try:
-                        msg = bot.rpc.get_message(accid, msg_id)
-                        c = bot.rpc.get_contact(accid, msg.from_id)
-                        db.upsert_user(c.id, c.display_name, c.address)
-                        db.add_message(msg_id, c.id)
-                        user = {"user_id": c.id, "display_name": c.display_name, "addr": c.address}
-                    except Exception:
-                        user = {"user_id": 0, "display_name": "?", "addr": "?"}
-                spawn_pty(bot, accid, msg_id)
-                db.open_session(msg_id, user["user_id"])
-                text = f"PTY {msg_id} opened by {user['display_name']} with {user['addr']}"
-                bot.logger.info(text)
-                notify_admin(bot, accid, text)
-            _reset_timer(msg_id, bot, accid)
+    ctx = AccountContext(bot, accid)
+    handler = CMD_HANDLERS.get(raw[0])
+    if handler:
+        handler(ctx, event.msg_id, raw)
 
 
 @cli.on(events.RawEvent(func=lambda e: e.kind == "WebxdcRealtimeAdvertisementReceived"))
 def on_ad_received(bot, accid, event) -> None:
-    bot.rpc.send_webxdc_realtime_advertisement(accid, event.msg_id)
+    ctx = AccountContext(bot, accid)
+    ctx.send_advertisement(event.msg_id)
 
 
 @cli.on(events.RawEvent(func=lambda e: e.kind == "WebxdcInstanceDeleted"))
 def on_instance_deleted(bot, accid, event) -> None:
-    _kill_pty(event.msg_id, bot, accid, "exited")
+    ctx = AccountContext(bot, accid)
+    ptys.kill(ctx, event.msg_id, "exited")
 
 
 @cli.on_start
