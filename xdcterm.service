@@ -6,7 +6,7 @@ After=network-online.target
 Type=simple
 Environment=PATH=/home/user/.local/bin:/usr/local/bin:/usr/bin:/bin
 WorkingDirectory=/home/user/python/xdcterm/backend
-ExecStart=/home/user/.local/bin/uv run bot.py
+ExecStart=/home/user/.local/bin/uv run bot.py serve
 Restart=on-failure
 RestartSec=10
 
