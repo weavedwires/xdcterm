@@ -32,7 +32,12 @@ uv sync
 uv run bot.py
 ```
 
-После запуска бот регистрируется в Delta Chat. Пользователи получают доступ через `/start` или SecureJoin.
+### Создание аккаунта и тестовый запуск
+
+```bash
+uv run bot.py init DCACCOUNT:nine.testrun.org #подставьте суда свой сервере
+uv run bot.py serve
+```
 
 ### Запуск на постоянку
 
