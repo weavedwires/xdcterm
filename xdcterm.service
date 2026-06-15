@@ -1,0 +1,15 @@
+[Unit]
+Description=xdcterm Delta Chat bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=user
+WorkingDirectory=/home/user/python/xdcterm
+ExecStart=uv run --directory backend bot.py
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

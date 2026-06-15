@@ -7,16 +7,11 @@ import termios
 import threading
 from pathlib import Path
 
-import argparse
-
 from deltachat2 import EventType, MsgData, events
 from deltabot_cli import BotCli
 
 from db import db
 from models import AccountContext, User
-
-if hasattr(argparse.ArgumentParser, '_check_help'):
-    argparse.ArgumentParser._check_help = lambda self, action: None
 
 INPUT = 0x49
 OUTPUT = 0x4f
