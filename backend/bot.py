@@ -12,6 +12,7 @@ from deltabot_cli import BotCli
 INPUT = 0x49
 OUTPUT = 0x4f
 EXIT = 0x45
+RESIZE = 0x52
 WEBXDC_FILE = str(Path(__file__).resolve().parents[1] / "frontend/dist-release/xdcterm.xdc")
 
 cli = BotCli("xdcterm")
@@ -25,10 +26,9 @@ class PTYProcess:
         self.msgid = msgid
         pid, self.fd = pty.fork()
         if pid == 0:
-            os.execvp("bash", ["bash"])
+            shell = os.environ.get("SHELL", "bash")
+            os.execvp(shell, [shell])
         else:
-            size = struct.pack("HHHH", 30, 80, 0, 0)
-            fcntl.ioctl(self.fd, termios.TIOCSWINSZ, size)
             threading.Thread(target=self._reader, daemon=True).start()
 
     def _reader(self) -> None:
@@ -47,6 +47,10 @@ class PTYProcess:
 
     def write(self, data: bytes) -> None:
         os.write(self.fd, data)
+
+    def resize(self, cols: int, rows: int) -> None:
+        size = struct.pack("HHHH", rows, cols, 0, 0)
+        fcntl.ioctl(self.fd, termios.TIOCSWINSZ, size)
 
     def close(self) -> None:
         try:
@@ -67,46 +71,32 @@ def send_webxdc(bot, accid: int, chatid: int) -> int:
     return msgid
 
 
-def setup_xdcterm_chat(bot, accid: int) -> int:
-    chatid = bot.rpc.get_config(accid, "ui.xdcterm_chat_id")
-    if chatid is None:
-        chatid = bot.rpc.create_group_chat(accid, "XDCTerm", True)
-        bot.rpc.set_config(accid, "ui.xdcterm_chat_id", str(chatid))
-    chatid = int(chatid)
-
-    info = bot.rpc.get_basic_chat_info(accid, chatid)
-    if info.is_unpromoted:
-        bot.rpc.misc_send_text_message(accid, chatid, "Hello")
-
-    return chatid
+@cli.on(events.RawEvent(types=[EventType.SECUREJOIN_INVITER_PROGRESS]))
+def on_securejoin(bot, accid, event) -> None:
+    if event.progress == 1000 and not bot.rpc.get_contact(accid, event.contact_id).is_bot:
+        chatid = bot.rpc.create_chat_by_contact_id(accid, event.contact_id)
+        send_webxdc(bot, accid, chatid)
 
 
-@cli.on_start
-def on_start(bot, args) -> None:
-    for accid in bot.rpc.get_all_account_ids():
-        if not bot.rpc.is_configured(accid):
-            continue
-        chatid = setup_xdcterm_chat(bot, accid)
-        qr = bot.rpc.get_chat_securejoin_qr_code_svg(accid, chatid)[0]
-        bot.logger.info("Chat invitation for account %d:\n%s", accid, qr)
-
-
-@cli.on(events.RawEvent(types=[EventType.INCOMING_MSG]))
-def on_incoming_msg(bot, accid, event) -> None:
-    chatid = bot.rpc.get_config(accid, "ui.xdcterm_chat_id")
-    if chatid is None or event.chat_id != int(chatid):
-        return
-    send_webxdc(bot, accid, int(chatid))
+@cli.on(events.NewMessage(command="/start"))
+def on_start_cmd(bot, accid, event) -> None:
+    send_webxdc(bot, accid, event.msg.chat_id)
 
 
 @cli.on(events.RawEvent(func=lambda e: e.kind == "WebxdcRealtimeData"))
 def on_webxdc_data(bot, accid, event) -> None:
     data = bytes(event.data)
-    if data[0] != INPUT:
+    if not data:
         return
     p = ptys.get(event.msg_id)
-    if p:
+    if not p:
+        return
+    if data[0] == INPUT:
         p.write(data[1:])
+    elif data[0] == RESIZE and len(data) >= 5:
+        cols = (data[1] << 8) | data[2]
+        rows = (data[3] << 8) | data[4]
+        p.resize(cols, rows)
 
 
 @cli.on(events.RawEvent(func=lambda e: e.kind == "WebxdcRealtimeAdvertisementReceived"))
@@ -125,3 +115,7 @@ def on_instance_deleted(bot, accid, event) -> None:
     p = ptys.pop(event.msg_id, None)
     if p:
         p.close()
+
+
+if __name__ == "__main__":
+    cli.start()

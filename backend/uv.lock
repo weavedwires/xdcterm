@@ -1,0 +1,112 @@
+version = 1
+revision = 3
+requires-python = ">=3.14"
+
+[[package]]
+name = "appdirs"
+version = "1.4.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d7/d8/05696357e0311f5b5c316d7b95f46c669dd9c15aaeecbb48c7d0aeb88c40/appdirs-1.4.4.tar.gz", hash = "sha256:7d5d0167b2b1ba821647616af46a749d1c653740dd0d2415100fe26e27afdf41", size = 13470, upload-time = "2020-05-11T07:59:51.037Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3b/00/2344469e2084fb287c2e0b57b72910309874c3245463acd6cf5e3db69324/appdirs-1.4.4-py2.py3-none-any.whl", hash = "sha256:a841dacd6b99318a741b166adb07e19ee71a274450e68237b4650ca1055ab128", size = 9566, upload-time = "2020-05-11T07:59:49.499Z" },
+]
+
+[[package]]
+name = "deltabot-cli"
+version = "8.1.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "appdirs" },
+    { name = "deltachat2", extra = ["full"] },
+    { name = "rich" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ff/10/243432c5a03daff5b57fd1b41621238b17a6f36d249a40c536482b72ca53/deltabot_cli-8.1.1.tar.gz", hash = "sha256:e8b0e656cdf69f413235cb8c6343431194bcd4d6cf4033f00673cfa716387f4d", size = 14891, upload-time = "2026-05-07T16:05:58.518Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/05/e4/5f6d64983884d6cb05203fdce510f0e597c974a51fd80d71b6db39b0b6e9/deltabot_cli-8.1.1-py3-none-any.whl", hash = "sha256:eabeb03edb378d5be2367a4abc2d1b097472f81cb0a79fba4217be6cfcca7785", size = 12682, upload-time = "2026-05-07T16:05:57.445Z" },
+]
+
+[[package]]
+name = "deltachat-rpc-server"
+version = "2.52.0"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/73/1a/422f0226bc712075b395bc30294e8737706931652c111d9becfdd0a198c8/deltachat_rpc_server-2.52.0-py3-none-android_21_arm64_v8a.whl", hash = "sha256:a1dfd576fd82dd0c123975b92ff29f08d61b5edb68106f2221157eff5597bbc2", size = 12152815, upload-time = "2026-06-09T01:15:46.279Z" },
+    { url = "https://files.pythonhosted.org/packages/58/a6/2bf2d4e25cb1e29cb9b0496bb8ca154753be17110f78b3b12dea463c60e1/deltachat_rpc_server-2.52.0-py3-none-android_21_armeabi_v7a.whl", hash = "sha256:421e2713852590b9d8aebd0103e458b5b0aead72a9469ba97f970b6f766eab71", size = 10030380, upload-time = "2026-06-09T01:15:48.811Z" },
+    { url = "https://files.pythonhosted.org/packages/c2/70/eee30fd6a4495a41c48e1501f8f6ac7ef852046ad4f15ad85e5210f76cbc/deltachat_rpc_server-2.52.0-py3-none-linux_armv6l.whl", hash = "sha256:5ec1905fed39b5d4d91b2e788b0ba8cbb8ee34ded8483442b4f94a4122a49854", size = 10961339, upload-time = "2026-06-09T01:15:51.111Z" },
+    { url = "https://files.pythonhosted.org/packages/85/e8/3f1ed03940ee63c94eeb20b13a755a2648397361a415cf4c6b90c0c814d1/deltachat_rpc_server-2.52.0-py3-none-linux_armv7l.manylinux_2_17_armv7l.manylinux2014_armv7l.musllinux_1_1_armv7l.whl", hash = "sha256:b7c8d3e813b3e43b14905b06ba51a81ce989ef85b0c6b5da28d991937d310f37", size = 10848847, upload-time = "2026-06-09T01:15:53.734Z" },
+    { url = "https://files.pythonhosted.org/packages/dc/02/f0d014a0f874c6a1a195969d1fa9d14bc061bd333cd1338bf5b3487af388/deltachat_rpc_server-2.52.0-py3-none-macosx_10_7_x86_64.whl", hash = "sha256:a8a6e7732dd436b5a8e3123b6bb52088ecfbf639de1f679579fb2960b2ad22ca", size = 10832502, upload-time = "2026-06-09T01:15:56.367Z" },
+    { url = "https://files.pythonhosted.org/packages/bb/68/b85796dbc734427950625af4fc348418dd9cd5a0e6cb3d8d6682babb9985/deltachat_rpc_server-2.52.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:64d312399f6a684cf5fd5970aecc57a3f365188eea154e7821040759f679a29d", size = 10559515, upload-time = "2026-06-09T01:15:58.518Z" },
+    { url = "https://files.pythonhosted.org/packages/94/38/89d25f1380ad3e184f75556065f36a2d0b653dd9b0f979a8ec946581713c/deltachat_rpc_server-2.52.0-py3-none-manylinux_2_12_i686.manylinux2010_i686.musllinux_1_1_i686.whl", hash = "sha256:a3590d26a660248ac277b3d77f1dbfb4380206ec4a105307b3f09efce849a724", size = 11508858, upload-time = "2026-06-09T01:16:00.592Z" },
+    { url = "https://files.pythonhosted.org/packages/3e/96/8550f2cf1d7ac2504ad5524fec73ae943c891bbe157630d3ed668bad8bcd/deltachat_rpc_server-2.52.0-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.musllinux_1_1_aarch64.whl", hash = "sha256:46184b1437d4b2f67108c6492e64220482d55aa609b37573113a8a55b9b7e877", size = 12113067, upload-time = "2026-06-09T01:16:02.94Z" },
+    { url = "https://files.pythonhosted.org/packages/6d/b4/f71e641e8c59a330fbb76a358a169f159ee8cbde1e429e6c07703e2eed61/deltachat_rpc_server-2.52.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.musllinux_1_1_x86_64.whl", hash = "sha256:fea4bc2d5e5708bc802a0aeb73b5366aed6ed2b8885a01748dd80fb87b23f991", size = 12495414, upload-time = "2026-06-09T01:16:05.38Z" },
+    { url = "https://files.pythonhosted.org/packages/a5/28/9628d272902237401bd3acf001e3314d98cf7d9b29f697067e26f961c1f8/deltachat_rpc_server-2.52.0-py3-none-win32.whl", hash = "sha256:4bc428a5ba339764843cdc99f5291cb5311b11687215333c453f8024ae06d6e4", size = 10910948, upload-time = "2026-06-09T01:16:07.852Z" },
+    { url = "https://files.pythonhosted.org/packages/52/c2/810bb42df7379491930762869832e0e38e975afda830cbdb508d2fa4c522/deltachat_rpc_server-2.52.0-py3-none-win_amd64.whl", hash = "sha256:13962cd7603abb8229836e309f91f2e9d20a3bda4060abc3c47b45b4754a5a1a", size = 11127803, upload-time = "2026-06-09T01:16:10.176Z" },
+]
+
+[[package]]
+name = "deltachat2"
+version = "0.10.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f0/c1/f025ab95da941fdaf49a47978974c3666d681625b5f584b2782c14ca1f31/deltachat2-0.10.0.tar.gz", hash = "sha256:b27f2f46cfb378b276a530f7f8eb475aa113339d2136825539332823cbb5a389", size = 19563, upload-time = "2026-04-13T23:44:31.639Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ec/ad/0eb9c72275c8178a2668da906f2635c90a97a7c5cecbfb2624cdc7cc1048/deltachat2-0.10.0-py3-none-any.whl", hash = "sha256:b20ff04b295ddebd981bb9be9185868ce5448c83b0ddfb064bef77706a3dbd45", size = 19062, upload-time = "2026-04-13T23:44:30.492Z" },
+]
+
+[package.optional-dependencies]
+full = [
+    { name = "deltachat-rpc-server" },
+]
+
+[[package]]
+name = "markdown-it-py"
+version = "4.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "mdurl" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/06/ff/7841249c247aa650a76b9ee4bbaeae59370dc8bfd2f6c01f3630c35eb134/markdown_it_py-4.2.0.tar.gz", hash = "sha256:04a21681d6fbb623de53f6f364d352309d4094dd4194040a10fd51833e418d49", size = 82454, upload-time = "2026-05-07T12:08:28.36Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b3/81/4da04ced5a082363ecfa159c010d200ecbd959ae410c10c0264a38cac0f5/markdown_it_py-4.2.0-py3-none-any.whl", hash = "sha256:9f7ebbcd14fe59494226453aed97c1070d83f8d24b6fc3a3bcf9a38092641c4a", size = 91687, upload-time = "2026-05-07T12:08:27.182Z" },
+]
+
+[[package]]
+name = "mdurl"
+version = "0.1.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d6/54/cfe61301667036ec958cb99bd3efefba235e65cdeb9c84d24a8293ba1d90/mdurl-0.1.2.tar.gz", hash = "sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba", size = 8729, upload-time = "2022-08-14T12:40:10.846Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8", size = 9979, upload-time = "2022-08-14T12:40:09.779Z" },
+]
+
+[[package]]
+name = "pygments"
+version = "2.20.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/c3/b2/bc9c9196916376152d655522fdcebac55e66de6603a76a02bca1b6414f6c/pygments-2.20.0.tar.gz", hash = "sha256:6757cd03768053ff99f3039c1a36d6c0aa0b263438fcab17520b30a303a82b5f", size = 4955991, upload-time = "2026-03-29T13:29:33.898Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f4/7e/a72dd26f3b0f4f2bf1dd8923c85f7ceb43172af56d63c7383eb62b332364/pygments-2.20.0-py3-none-any.whl", hash = "sha256:81a9e26dd42fd28a23a2d169d86d7ac03b46e2f8b59ed4698fb4785f946d0176", size = 1231151, upload-time = "2026-03-29T13:29:30.038Z" },
+]
+
+[[package]]
+name = "rich"
+version = "15.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "markdown-it-py" },
+    { name = "pygments" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c0/8f/0722ca900cc807c13a6a0c696dacf35430f72e0ec571c4275d2371fca3e9/rich-15.0.0.tar.gz", hash = "sha256:edd07a4824c6b40189fb7ac9bc4c52536e9780fbbfbddf6f1e2502c31b068c36", size = 230680, upload-time = "2026-04-12T08:24:00.75Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/82/3b/64d4899d73f91ba49a8c18a8ff3f0ea8f1c1d75481760df8c68ef5235bf5/rich-15.0.0-py3-none-any.whl", hash = "sha256:33bd4ef74232fb73fe9279a257718407f169c09b78a87ad3d296f548e27de0bb", size = 310654, upload-time = "2026-04-12T08:24:02.83Z" },
+]
+
+[[package]]
+name = "xdcterm-bot"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "deltabot-cli" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "deltabot-cli", specifier = ">=0.10.0" }]

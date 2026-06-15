@@ -1,13 +1,18 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <link rel="stylesheet" href="node_modules/@xterm/xterm/css/xterm.css" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <style>
+      @font-face {
+        font-family: "JB";
+        src: url("jetbrains-mono-nf.woff2") format("woff2");
+      }
+    </style>
     <script src="webxdc.js"></script>
-    <script type="module" src="node_modules/@xterm/xterm/lib/xterm.js"></script>
     <script type="module" src="./index.js"></script>
   </head>
   <body>
-    <p id="terminal-title">No title</p>
     <div id="terminal"></div>
   </body>
 </html>

@@ -18,8 +18,9 @@ Uses `BotCli("xdcterm")` from `deltabot-cli`. Event handlers registered via `@cl
 
 | Handler | Filter | Purpose |
 |---|---|---|
-| `on_start` | `@cli.on_start` | Create XDCTerm chat, print QR |
-| `on_incoming_msg` | `RawEvent(types=[EventType.INCOMING_MSG])` | Send WebXDC + spawn PTY |
+| `on_start` | `@cli.on_start` | (placeholder — built-in serve prints QR) |
+| `on_securejoin` | `RawEvent(types=[EventType.SECUREJOIN_INVITER_PROGRESS])` | Securejoin complete → send WebXDC |
+| `on_start_cmd` | `NewMessage(command="/start")` | User sends /start → send WebXDC |
 | `on_webxdc_data` | `RawEvent(func=lambda e: e.kind == "WebxdcRealtimeData")` | Forward terminal input to PTY |
 | `on_ad_received` | `RawEvent(func=lambda e: e.kind == ...)` | Multi-device: spawn PTY for each joiner |
 | `on_instance_deleted` | `RawEvent(func=lambda e: e.kind == ...)` | Clean up PTY on WebXDC close |
@@ -32,6 +33,7 @@ Binary over WebXDC realtime channel:
 - `0x49` ('I') — input from frontend → PTY stdin
 - `0x4f` ('O') — output from PTY → frontend
 - `0x45` ('E') — PTY exit signal → frontend
+- `0x52` ('R') — resize terminal (4 bytes big-endian: cols, rows)
 
 ## PTY
 
